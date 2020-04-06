@@ -2,7 +2,12 @@
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+#include <string>
 using namespace std;
+
+
+template <typename T> std::string type_name();
+
 
 typedef tuple<float, float> point_t;
 typedef vector<point_t> points_t;
@@ -24,5 +29,5 @@ dict_int_t defaultExtent = {{"width", 1}, {"height", 1}};
 //}
 
 int main() {
-		cout << typeof(defaultExtent) << endl;
+		cout << defaultExtent["width"] << endl;
 }
