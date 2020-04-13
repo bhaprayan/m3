@@ -48,13 +48,6 @@ point_t centroid(points_t pts) {
 }
 
 // TODO: improve points
-
-
-
-
-
-
-
 int main() {
 
 	srand(time(NULL));

@@ -1,3 +1,6 @@
 [submodule "terrain"]
 	path = terrain
 	url = https://github.com/mewo2/terrain
+[submodule "voronoi"]
+	path = voronoi
+	url = https://github.com/JCash/voronoi.git
