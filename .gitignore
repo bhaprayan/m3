@@ -1,2 +1,4 @@
 .ccls-cache/
 tags*
+# build files
+build/
