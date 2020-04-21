@@ -192,8 +192,8 @@ int main() {
 
   // create mesh
   mesh_t mesh;
-  mesh.width = 100;
-  mesh.height = 100;
+  mesh.width = 200;
+  mesh.height = 200;
   mesh.vcenter = generatePoints(n, mesh);
 
 
