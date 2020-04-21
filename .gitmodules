@@ -3,4 +3,4 @@
 	url = https://github.com/mewo2/terrain
 [submodule "voronoi"]
 	path = voronoi
-	url = https://github.com/JCash/voronoi.git
+	url = git@github.com:bhaprayan/voronoi.git
