@@ -1,14 +1,14 @@
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <math.h>
+#include <numeric>
+#include <string>
+#include <time.h>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <string>
-#include <tuple>
-#include <numeric>
-#include <time.h>
-#include <algorithm>
-#include <math.h>
-#include <cmath>
 
 #include <stdint.h>
 #include <stdio.h> // printf
@@ -39,8 +39,6 @@
 #include "../test/fastjet/voronoi.h"
 #include <vector>
 #endif
-
-
 
 using namespace std;
 
@@ -111,13 +109,7 @@ jcv_diagram return_voronoi() {
   return diagram;
 }
 
-
-
-
 template <typename T> std::string type_name();
-
-
-
 
 // -------------------- CONSTRUCTORS -------------------- //
 
@@ -133,7 +125,6 @@ struct edge_t {
 
 typedef vector<point_t> points_t;
 typedef vector<edge_t> edges_t;
-
 
 // point constructor
 point_t point(float x, float y) {
@@ -151,85 +142,66 @@ edge_t edge(point_t v1, point_t v2) {
   return e;
 }
 
-
-
-
 struct mesh_t {
-  points_t vcenter;             // size |v|
-  edges_t edges;                // size |v| * deg(v)
-  vector<float> heightmap;      // size |v|
-  vector<bool> type;            // size |v|
+  points_t vcenter;        // size |v|
+  edges_t edges;           // size |v| * deg(v)
+  vector<float> heightmap; // size |v|
+  vector<bool> type;       // size |v|
   int width;
   int height;
 };
 
-
 // -------------------- END CONSTRUCTORS -------------------- //
 
-
 // -------------------- HELPER FUNCTIONS -------------------- //
-
 
 float rand_float() { // TODO: not generating random numbers
   return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
 
-
 point_t rand_point(int width, int height) {
   return point((rand_float() - 0.5) * width, (rand_float() - 0.5) * height);
 }
 
+float dot(point_t a, point_t b) { return a.x * b.x + a.y * b.y; }
 
-float dot(point_t a, point_t b) {
-  return a.x * b.x + a.y * b.y;
+point_t sub(point_t a, point_t b) { return point(a.x - b.x, a.y - b.y); }
+
+static inline jcv_point remap(const jcv_point *pt, const jcv_point *min,
+                              const jcv_point *max, const jcv_point *scale) {
+  jcv_point p;
+  p.x = (pt->x - min->x) / (max->x - min->x) * scale->x;
+  p.y = (pt->y - min->y) / (max->y - min->y) * scale->y;
+  return p;
 }
-
-
-
-point_t sub(point_t a, point_t b) {
-  return point(a.x - b.x, a.y - b.y);
-}
-
-
 
 // -------------------- END HELPER FUNCTIONS -------------------- //
-
-
-
-
-
-
-
 
 points_t generatePoints(int n, mesh_t mesh) {
   points_t pts;
   for (int i = 0; i < n; i++) {
-    pts.push_back( rand_point(mesh.width, mesh.height) );
+    pts.push_back(rand_point(mesh.width, mesh.height));
   }
   return pts;
 }
 
-
-
 mesh_t slope(mesh_t mesh, point_t direction) {
-  for(int i = 0; i < mesh.vcenter.size(); i++) {
+  for (int i = 0; i < mesh.vcenter.size(); i++) {
     mesh.heightmap[i] = dot(mesh.vcenter[i], direction);
   }
   return mesh;
 }
 
-
 mesh_t cone(mesh_t mesh) {
 
-  point_t c = point(0,0);
+  point_t c = point(0, 0);
 
-  for(int i = 0; i < mesh.vcenter.size(); i++) {
+  for (int i = 0; i < mesh.vcenter.size(); i++) {
     point_t d = sub(mesh.vcenter[i], c);
-    mesh.heightmap[i] = sqrt(dot(d,d)) * mesh.heightmap[i];
+    mesh.heightmap[i] = sqrt(dot(d, d)) * mesh.heightmap[i];
   }
   return mesh;
 }
-
 
 mesh_t mountains(mesh_t mesh, int n, float r) {
 
@@ -237,38 +209,37 @@ mesh_t mountains(mesh_t mesh, int n, float r) {
   float weight = 5.0;
 
   points_t mounts;
-  for(int i = 0; i < n; i++) {
-    mounts.push_back( rand_point(mesh.width, mesh.height) );
+  for (int i = 0; i < n; i++) {
+    mounts.push_back(rand_point(mesh.width, mesh.height));
   }
 
-  for(int i = 0; i < mesh.vcenter.size(); i++) {
+  for (int i = 0; i < mesh.vcenter.size(); i++) {
     point_t v = mesh.vcenter[i];
-    for(int j = 0; j < n; j++) {
+    for (int j = 0; j < n; j++) {
       point_t m = mounts[j];
-      point_t mv = sub(m,v);
+      point_t mv = sub(m, v);
 
-      float t = r * r  / dot(mv,mv);
+      float t = r * r / dot(mv, mv);
 
-      //if(t > 100.0)
-      //printf("%f\n", t);
-      if(t > limit) { t = limit; }
+      // if(t > 100.0)
+      // printf("%f\n", t);
+      if (t > limit) {
+        t = limit;
+      }
 
       mesh.heightmap[i] += weight * t;
-
     }
   }
 
   return mesh;
 }
 
-
-
 mesh_t normalize(mesh_t mesh) {
 
   float min = *min_element(mesh.heightmap.begin(), mesh.heightmap.end());
   float max = *max_element(mesh.heightmap.begin(), mesh.heightmap.end());
 
-  for(int i = 0; i < mesh.heightmap.size(); i++) {
+  for (int i = 0; i < mesh.heightmap.size(); i++) {
     mesh.heightmap[i] -= min;
     mesh.heightmap[i] *= 1.0 / (max - min);
   }
@@ -278,10 +249,17 @@ mesh_t normalize(mesh_t mesh) {
 
 int main() {
 
-	srand(time(NULL));
+  srand(time(NULL));
 
-	int n = 1000;
+  int n = 1000;
 
+  // Image dimension
+  int width = 512;
+  int height = 512;
+
+  jcv_point dimensions;
+  dimensions.x = (jcv_real)width;
+  dimensions.y = (jcv_real)height;
 
   // create mesh
   mesh_t mesh;
@@ -289,32 +267,46 @@ int main() {
   mesh.height = 100;
   mesh.vcenter = generatePoints(n, mesh);
 
-
-  for(int i = 0; i < mesh.vcenter.size(); i++) {
+  for (int i = 0; i < mesh.vcenter.size(); i++) {
     mesh.heightmap.push_back(1.0);
   }
 
-
   mesh = slope(mesh, point(0, 100));
-  //mesh = cone(mesh);
+  // mesh = cone(mesh);
   mesh = mountains(mesh, 15, 100);
   mesh = normalize(mesh);
 
-
-
-  for(int i = 0; i < mesh.vcenter.size(); i++) {
-    printf("%f %f %f\n", mesh.vcenter[i].x, mesh.vcenter[i].y, mesh.heightmap[i]);
+  for (int i = 0; i < mesh.vcenter.size(); i++) {
+    printf("%f %f %f\n", mesh.vcenter[i].x, mesh.vcenter[i].y,
+           mesh.heightmap[i]);
   }
-
 
   jcv_diagram diagram = return_voronoi();
 
   printf("return control");
   const jcv_site *sites = jcv_diagram_get_sites(&diagram);
+
   for (int i = 0; i < diagram.numsites; ++i) {
     const jcv_site *site = &sites[i];
-    printf("x: %f y: %f", site->p.x, site->p.y);
+
+    srand((unsigned int)site->index); // for generating colors for the triangles
+
+    jcv_point s = remap(&site->p, &diagram.min, &diagram.max, &dimensions);
+
+    printf("cell x: %f cell y: %f\n", s.x, s.y);
+
+    const jcv_graphedge *e = site->edges;
+    while (e) {
+      jcv_point p0 = remap(&e->pos[0], &diagram.min, &diagram.max, &dimensions);
+      printf("ep0 x: %f ep0 y: %f\n", p0.x, p0.y);
+      jcv_point p1 = remap(&e->pos[1], &diagram.min, &diagram.max, &dimensions);
+      printf("ep1 x: %f ep1 y: %f\n", p1.x, p1.y);
+      e = e->next;
+    }
   }
 
-
+  // for (int i = 0; i < diagram.numsites; ++i) {
+  // const jcv_site *site = &sites[i];
+  // printf("x: %f y: %f", site->p.x, site->p.y);
+  //}
 }
