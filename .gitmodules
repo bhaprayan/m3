@@ -4,3 +4,6 @@
 [submodule "voronoi"]
 	path = voronoi
 	url = git@github.com:bhaprayan/voronoi.git
+[submodule "earcut.hpp"]
+	path = earcut.hpp
+	url = git@github.com:bhaprayan/earcut.hpp.git

@@ -1,5 +1,5 @@
 CXX=clang++ -std=c++11
-CFLAGS=-I.
+CFLAGS=-lraylib -I./earcut.hpp/include/mapbox
 #ASAN="-fsanitize=address -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fsanitize=undefined"
 #ASAN_LDFLAGS="-fsanitize=address "
 
@@ -10,7 +10,7 @@ return_voronoi :
 
 mapgen :
 	$(CXX) -c voronoi/src/stb_wrapper.c -o build/stb_wrapper.o
-	$(CXX) -o mapgen -g -O0 -m64 -std=c++11 -w -Weverything -Wno-float-equal -pedantic -lm -Isrc src/main.cc build/stb_wrapper.o
+	$(CXX) $(CFLAGS) -o mapgen -g -O0 -m64 -std=c++11 -w -Weverything -Wno-float-equal -pedantic -lm -Isrc src/main.cc build/stb_wrapper.o
 
 clean :
 	rm build/*
