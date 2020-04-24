@@ -1,5 +1,6 @@
 #!/bin/bash
 
-make
+make clean
+make mapgen
 ./mapgen > test.txt
-python3 visualize.py
+python3 src/visualize.py
