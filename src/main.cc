@@ -9,6 +9,8 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include <chrono>
+#include <sys/time.h>
 
 #include <stdint.h>
 #include <stdio.h> // printf
@@ -41,6 +43,7 @@
 #endif
 
 using namespace std;
+using namespace std::chrono;
 
 static void relax_points(const jcv_diagram *diagram, jcv_point *points) {
   const jcv_site *sites = jcv_diagram_get_sites(diagram);
@@ -77,7 +80,7 @@ jcv_diagram return_voronoi(int count) {
 
   int pointoffset = 10; // move the points inwards, for aestetic reasons
 
-  srand(0);
+  //srand(0);
 
   for (int i = 0; i < count; ++i) {
     points[i].x = (float)(pointoffset + rand() % (width - 2 * pointoffset));
@@ -177,13 +180,19 @@ struct mesh_t {
 // -------------------- HELPER FUNCTIONS -------------------- //
 
  
-float rand_float() { // TODO: not generating random numbers
-  return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+float rand_float() {
+  float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+  return r;
+}
+
+float rand_int(int min, int max) {
+  int i = (rand() % (max-min));
+  return i + min;
 }
 
 
 point_t rand_point(int width, int height) {
-  return point((rand_float() - 0.5) * width, (rand_float() - 0.5) * height);
+  return point(rand_float() * width, rand_float() * height);
 }
 
 
@@ -238,13 +247,13 @@ mesh_t cone(mesh_t mesh) {
 }
 
 
-mesh_t mountains(mesh_t mesh, int n, float r, float limit) {
-
-  float weight = 5.0;
+mesh_t mountains(mesh_t mesh, int n, float r, float h_limit, float r_limit) {
 
   points_t mounts;
   for(int i = 0; i < n; i++) {
-    mounts.push_back( rand_point(mesh.width, mesh.height) );
+
+    point_t pt = rand_point(mesh.width, mesh.height);
+    mounts.push_back( pt );
   }
 
   for(int i = 0; i < mesh.vcenter.size(); i++) {
@@ -253,11 +262,15 @@ mesh_t mountains(mesh_t mesh, int n, float r, float limit) {
       point_t m = mounts[j];
       point_t mv = sub(m,v);
 
-      float t = r * r  / dot(mv,mv);
+      float dist = dot(mv,mv);
+      if(dist < r_limit) {
 
-      if(t > limit) { t = limit; }
+        float t = r * r / dist;
+        if(t > h_limit) { t = h_limit; }
 
-      mesh.heightmap[i] += weight * t;
+        mesh.heightmap[i] += t;
+
+      }
 
     }
   }
@@ -283,16 +296,42 @@ mesh_t normalize(mesh_t mesh) {
 
 
 
+float get_median(mesh_t mesh) {
+
+  std::sort(mesh.heightmap.begin(), mesh.heightmap.end());
+  float median = mesh.heightmap[floor(mesh.heightmap.size() / 2)];
+
+  return median;
+}
+
+float get_mean(mesh_t mesh) {
+
+  float sum;
+  for(int i = 0; i < mesh.heightmap.size(); i++) {
+    sum += mesh.heightmap[i];
+  }
+
+  return sum / (mesh.heightmap.size());
+}
+
+
+
+
 
 
 int main() {
 
 
+  struct timeval tp;
+  gettimeofday(&tp, NULL);
+  unsigned int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+  srand(ms);
+
   int n = 1000;
 
   // Image dimension
-  int width = 512;
-  int height = 512;
+  int width = 1024;
+  int height = 1024;
 
   mesh_t mesh;
   mesh.width = width;
@@ -311,11 +350,10 @@ int main() {
   for (int i = 0; i < diagram.numsites; ++i) {
     const jcv_site *site = &sites[i];
 
-    srand((unsigned int)site->index); // for generating colors for the triangles
-
     jcv_point s = remap(&site->p, &diagram.min, &diagram.max, &dimensions);
 
     mesh.vcenter.push_back(point(s.x, s.y));
+
     edges_t edges;
 
     const jcv_graphedge *e = site->edges;
@@ -342,22 +380,36 @@ int main() {
   }
 
 
-  mesh = slope(mesh, point(0, 100));
+  gettimeofday(&tp, NULL);
+  ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+  srand(ms);
+
+
+
+
+  
+
+  mesh = slope(mesh, point(rand_int(-100, 100), rand_int(-100, 100)));
   //mesh = cone(mesh);
   mesh = normalize(mesh);
-  mesh = mountains(mesh, 15, 100, 30.0);
+  mesh = mountains(mesh, 25, 10, 30, 50000);
   mesh = normalize(mesh);
+  float median = get_median(mesh);
+  float mean = get_mean(mesh);
 
-  printf("%d\n", mesh.vcenter.size());
-  /*
+  
+  
+  printf("%f\n", mean);
+  
   for (int i = 0; i < mesh.vcenter.size(); i++) {
-      printf("v %f %f %f\n", mesh.vcenter[i].x, mesh.vcenter[i].y, mesh.heightmap[i]);
 
+      printf("%f", mesh.heightmap[i]);
       for (int j = 0; j < mesh.edges[i].size(); j++) {
-        printf("e %f %f %f %f\n", mesh.edges[i][j].v1.x, mesh.edges[i][j].v1.y, mesh.edges[i][j].v2.x, mesh.edges[i][j].v2.y);
+        printf(" %f %f", mesh.edges[i][j].v1.x, mesh.edges[i][j].v1.y);
       }
-  }
-  */
+      printf("\n");
+  } 
+  
 
 
 }
