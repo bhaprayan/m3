@@ -282,25 +282,121 @@ float get_variance(mesh_t mesh) {
   return var / (mesh.heightmap.size());
 }
 
-Color get_color(float height, float mean, float var) {
+float get_max_height(mesh_t mesh) {
+  std::vector<float>::iterator i;
+  float max_element = 0;
+  for (i = mesh.heightmap.begin(); i != mesh.heightmap.end(); i++) {
+    if (*i > max_element) {
+      max_element = *i;
+    }
+  }
+  return max_element;
+}
+
+float get_min_height(mesh_t mesh) {
+  std::vector<float>::iterator i;
+  float min_element = 0;
+  for (i = mesh.heightmap.begin(); i != mesh.heightmap.end(); i++) {
+    if (*i < min_element) {
+      min_element = *i;
+    }
+  }
+  return min_element;
+}
+
+void HSVtoRGB(int H, double S, double V, int output[3]) {
+  double C = S * V;
+  double X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
+  double m = V - C;
+  double Rs, Gs, Bs;
+
+  if (H >= 0 && H < 60) {
+    Rs = C;
+    Gs = X;
+    Bs = 0;
+  } else if (H >= 60 && H < 120) {
+    Rs = X;
+    Gs = C;
+    Bs = 0;
+  } else if (H >= 120 && H < 180) {
+    Rs = 0;
+    Gs = C;
+    Bs = X;
+  } else if (H >= 180 && H < 240) {
+    Rs = 0;
+    Gs = X;
+    Bs = C;
+  } else if (H >= 240 && H < 300) {
+    Rs = X;
+    Gs = 0;
+    Bs = C;
+  } else {
+    Rs = C;
+    Gs = 0;
+    Bs = X;
+  }
+
+  output[0] = (Rs + m) * 255;
+  output[1] = (Gs + m) * 255;
+  output[2] = (Bs + m) * 255;
+}
+
+Color get_color(float height, float mean, float var, float min_height,
+                float max_height) {
   if (height >= mean) {
     // land
-    if (height > (mean + 2 * var)) {
-      return BROWN;
-    } else if (height > (mean + var)) {
-      return DARKGREEN;
-    } else {
-      return GREEN;
-    }
+    // light green: 110 100 50
+    // dark green: 110 100 25
+    float rescale_max = 0.50; // light green
+    float rescale_min = 0.25; // dark green
+    float min_height = mean;
+    float value = height;
+    int output[3];
+    int H = 110;
+    double S = 1.0;
+    float V = ((rescale_max - rescale_min) * (value - min_height) /
+               (max_height - min_height)) +
+              rescale_min;
+    // printf("land %f\n", V);
+    HSVtoRGB(H, S, V, output);
+    unsigned char a = 255;
+    Color element_color =
+        (Color){(unsigned char)output[0], (unsigned char)output[1],
+                (unsigned char)output[2], a};
+    return element_color;
+    // if (height > (mean + 2 * var)) {
+    // return BROWN;
+    //} else if (height > (mean + var)) {
+    // return DARKGREEN;
+    //} else {
+    // return GREEN;
+    //}
   } else {
     // water
-    if (height < (mean - 2 * var)) {
-      return DARKBLUE;
-    } else if (height < (mean - var)) {
-      return BLUE;
-    } else {
-      return SKYBLUE;
-    }
+    float rescale_max = 0.65; // light blue
+    float rescale_min = 0.25; // dark blue
+    float max_height = mean;
+    float value = height;
+    int output[3];
+    int H = 205;
+    double S = 1.0;
+    float V = ((rescale_max - rescale_min) * (value - min_height) /
+               (max_height - min_height)) +
+              rescale_min;
+    // printf("water %f\n", V);
+    HSVtoRGB(H, S, V, output);
+    unsigned char a = 255;
+    Color element_color =
+        (Color){(unsigned char)output[0], (unsigned char)output[1],
+                (unsigned char)output[2], a};
+    return element_color;
+    // if (height < (mean - 2 * var)) {
+    // return DARKBLUE;
+    //} else if (height < (mean - var)) {
+    // return BLUE;
+    //} else {
+    // return SKYBLUE;
+    //}
   }
 }
 
@@ -372,6 +468,12 @@ int main() {
   float median = get_median(mesh);
   float mean = get_mean(mesh);
   float var = get_variance(mesh);
+
+  float min_height = get_min_height(mesh);
+  printf("min height: %f\n", min_height);
+  float max_height = get_max_height(mesh);
+  printf("max height: %f\n", max_height);
+  printf("mean: %f median: %f variance: %f\n", mean, median, var);
 
   using Coord = float;
 
@@ -450,7 +552,8 @@ int main() {
         // printf("nan\n");
         // continue;
         //}
-        Color color = get_color(mesh.heightmap[i], mean, var);
+        Color color =
+            get_color(mesh.heightmap[i], mean, var, min_height, max_height);
         DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0], tv_1[1]},
                      (Vector2){tv_2[0], tv_2[1]}, color);
       }
