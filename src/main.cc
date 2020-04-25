@@ -264,12 +264,44 @@ float get_median(mesh_t mesh) {
 
 float get_mean(mesh_t mesh) {
 
-  float sum;
+  float sum = 0;
   for (int i = 0; i < mesh.heightmap.size(); i++) {
     sum += mesh.heightmap[i];
   }
 
   return sum / (mesh.heightmap.size());
+}
+
+float get_variance(mesh_t mesh) {
+  float mean = get_mean(mesh);
+  float var = 0;
+  std::vector<float>::iterator i;
+  for (i = mesh.heightmap.begin(); i != mesh.heightmap.end(); i++) {
+    var += (*i - mean) * (*i - mean);
+  }
+  return var / (mesh.heightmap.size());
+}
+
+Color get_color(float height, float mean, float var) {
+  if (height >= mean) {
+    // land
+    if (height > (mean + 2 * var)) {
+      return BROWN;
+    } else if (height > (mean + var)) {
+      return DARKGREEN;
+    } else {
+      return GREEN;
+    }
+  } else {
+    // water
+    if (height < (mean - 2 * var)) {
+      return DARKBLUE;
+    } else if (height < (mean - var)) {
+      return BLUE;
+    } else {
+      return SKYBLUE;
+    }
+  }
 }
 
 int main() {
@@ -339,6 +371,7 @@ int main() {
   mesh = normalize(mesh);
   float median = get_median(mesh);
   float mean = get_mean(mesh);
+  float var = get_variance(mesh);
 
   using Coord = float;
 
@@ -417,13 +450,9 @@ int main() {
         // printf("nan\n");
         // continue;
         //}
-        if (mesh.heightmap[i] > mean) {
-          DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0], tv_1[1]},
-                       (Vector2){tv_2[0], tv_2[1]}, BLUE);
-        } else {
-          DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0], tv_1[1]},
-                       (Vector2){tv_2[0], tv_2[1]}, DARKGREEN);
-        }
+        Color color = get_color(mesh.heightmap[i], mean, var);
+        DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0], tv_1[1]},
+                     (Vector2){tv_2[0], tv_2[1]}, color);
       }
       // for (int j = 0; j < mesh.edges[i].size(); j++) {
       // float startPosX = mesh.edges[i][j].v1.x;

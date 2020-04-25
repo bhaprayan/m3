@@ -13,5 +13,5 @@ mapgen :
 	$(CXX) $(CFLAGS) -o mapgen -g -O0 -m64 -std=c++11 -w -Weverything -Wno-float-equal -pedantic -lm -Isrc src/main.cc build/stb_wrapper.o
 
 clean :
-	rm build/*
-	rm mapgen
+	rm -f build/*
+	rm -f mapgen
