@@ -556,9 +556,10 @@ int main(int argc, char **argv) {
     //--------------------------------------------------------------------------------------
 
     // Main game loop
-    // int i = 1;
+    int i = 0;
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
+      auto RENDER_START = high_resolution_clock::now();
       // Update
       //----------------------------------------------------------------------------------
       // TODO: Update your variables here
@@ -637,6 +638,46 @@ int main(int argc, char **argv) {
       // drawing, this way, all LINES are rendered in a single draw pass
       EndDrawing();
       //----------------------------------------------------------------------------------
+      auto RENDER_END = high_resolution_clock::now();
+      if (i == 0) {
+        auto render_duration =
+            duration_cast<microseconds>(RENDER_END - RENDER_START).count();
+        auto voronoi_duration =
+            duration_cast<microseconds>(VORONOI_END - VORONOI_START).count();
+
+        auto main_duration =
+            duration_cast<microseconds>(MAIN_END - MAIN_START).count();
+
+        auto parsing_duration =
+            duration_cast<microseconds>(PARSING_END - PARSING_START).count();
+        auto slope_duration =
+            duration_cast<microseconds>(SLOPE_END - SLOPE_START).count();
+        auto mountains_duration =
+            duration_cast<microseconds>(MOUNTAINS_END - MOUNTAINS_START)
+                .count();
+        auto norm_duration =
+            duration_cast<microseconds>(NORM1_END - NORM1_START).count() +
+            duration_cast<microseconds>(NORM2_END - NORM2_START).count();
+        auto mean_duration =
+            duration_cast<microseconds>(MEAN_END - MEAN_START).count();
+
+        auto misc_duration = main_duration - voronoi_duration -
+                             parsing_duration - slope_duration -
+                             mountains_duration - norm_duration - mean_duration;
+
+        cout << "Render      | " << render_duration << " microseconds" << endl;
+        cout << "Voronoi   | " << voronoi_duration << " microseconds" << endl;
+        cout << "Parsing   | " << parsing_duration << " microseconds" << endl;
+        cout << "Slope     | " << slope_duration << " microseconds" << endl;
+        cout << "Mountains | " << mountains_duration << " microseconds" << endl;
+        cout << "Norm      | " << norm_duration << " microseconds" << endl;
+        cout << "Mean      | " << mean_duration << " microseconds" << endl;
+        cout << "Misc      | " << misc_duration << " microseconds" << endl;
+        cout << "Main      | " << main_duration + render_duration
+             << " microseconds" << endl;
+
+        i += 1;
+      }
     }
 
     // De-Initialization
