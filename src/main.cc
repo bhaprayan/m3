@@ -1,20 +1,23 @@
+#include "../earcut.hpp/include/mapbox/earcut.hpp"
+#include "raylib.h"
+
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <math.h>
 #include <numeric>
 #include <string>
+#include <sys/time.h>
 #include <time.h>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <chrono>
-#include <sys/time.h>
 
-#include <random>
-#include <functional>
 #include <ctime>
+#include <functional>
+#include <random>
 
 #include <omp.h>
 
@@ -51,9 +54,6 @@
 using namespace std;
 using namespace std::chrono;
 
-
-
-
 // -------------------- CONSTRUCTORS -------------------- //
 
 struct point_t {
@@ -65,8 +65,6 @@ struct edge_t {
   point_t v1;
   point_t v2;
 };
-
-
 
 // point constructor
 point_t point(float x, float y) {
@@ -84,72 +82,54 @@ edge_t edge(point_t v1, point_t v2) {
   return e;
 }
 
-
 typedef vector<edge_t> edges_t;
 
 struct mesh_t {
-  point_t *vcenter;             // size |v|
-  edges_t *edges;               // size |v| * deg(v)
-  float *heightmap;             // size |v|
+  point_t *vcenter; // size |v|
+  edges_t *edges;   // size |v| * deg(v)
+  float *heightmap; // size |v|
   int nVoxels;
   int width;
   int height;
 };
 
-
 // -------------------- END CONSTRUCTORS -------------------- //
-
 
 // -------------------- HELPER FUNCTIONS -------------------- //
 
-
 int GetRN(int min = 0, int max = RAND_MAX) {
-    std::uniform_int_distribution<int> distribution(min, max);
-    static std::mt19937 engine(time(NULL));
-    return distribution(engine);
+  std::uniform_int_distribution<int> distribution(min, max);
+  static std::mt19937 engine(time(NULL));
+  return distribution(engine);
 }
- 
+
 float rand_float() {
   float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
   return r;
 }
 
 float rand_int(int min, int max) {
-  int i = (rand() % (max-min));
+  int i = (rand() % (max - min));
   return i + min;
 }
-
 
 point_t rand_point(int width, int height) {
   return point(rand_float() * width, rand_float() * height);
 }
 
+float dot(point_t a, point_t b) { return a.x * b.x + a.y * b.y; }
 
-float dot(point_t a, point_t b) {
-  return a.x * b.x + a.y * b.y;
-}
-
-
-
-point_t sub(point_t a, point_t b) {
-  return point(a.x - b.x, a.y - b.y);
-}
-
-
+point_t sub(point_t a, point_t b) { return point(a.x - b.x, a.y - b.y); }
 
 // -------------------- END HELPER FUNCTIONS -------------------- //
 
-
-
-
 // -------------------- VORONOI FUNCTIONS -------------------- //
-
 
 static void relax_points(const jcv_diagram *diagram, jcv_point *points) {
   const jcv_site *sites = jcv_diagram_get_sites(diagram);
 
   int i = 0;
-  #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
   for (i = 0; i < diagram->numsites; ++i) {
     const jcv_site *site = &sites[i];
     jcv_point sum = site->p;
@@ -184,7 +164,7 @@ jcv_diagram return_voronoi(int count) {
   int pointoffset = 10; // move the points inwards, for aestetic reasons
 
   int i = 0;
-  #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
   for (i = 0; i < count; ++i) {
     points[i].x = (float)(pointoffset + GetRN() % (width - 2 * pointoffset));
     points[i].y = (float)(pointoffset + GetRN() % (height - 2 * pointoffset));
@@ -211,7 +191,6 @@ jcv_diagram return_voronoi(int count) {
   return diagram;
 }
 
-
 static inline jcv_point remap(const jcv_point *pt, const jcv_point *min,
                               const jcv_point *max, const jcv_point *scale) {
   jcv_point p;
@@ -220,135 +199,242 @@ static inline jcv_point remap(const jcv_point *pt, const jcv_point *min,
   return p;
 }
 
-
-
-
-
 // -------------------- END VORONOI FUNCTIONS -------------------- //
-
-
-
-
-
-
-
 
 void slope(mesh_t *mesh, point_t direction) {
   int i = 0;
-  #pragma omp parallel for schedule(static)
-  for(i = 0; i < mesh->nVoxels; i++) {
+#pragma omp parallel for schedule(static)
+  for (i = 0; i < mesh->nVoxels; i++) {
     mesh->heightmap[i] = dot(mesh->vcenter[i], direction);
   }
 }
 
-
 void mountains(mesh_t *mesh, int n, float r, float h_limit, float r_limit) {
 
-  point_t *mounts = (point_t*)calloc(n, sizeof(point_t));
+  point_t *mounts = (point_t *)calloc(n, sizeof(point_t));
   int i = 0;
-  #pragma omp parallel for schedule(static)
-  for(i = 0; i < n; i++) {
+#pragma omp parallel for schedule(static)
+  for (i = 0; i < n; i++) {
     point_t pt = rand_point(mesh->width, mesh->height);
     mounts[i] = pt;
   }
 
-  #pragma omp parallel for schedule(static)
-  for(i = 0; i < mesh->nVoxels; i++) {
+#pragma omp parallel for schedule(static)
+  for (i = 0; i < mesh->nVoxels; i++) {
     point_t v = mesh->vcenter[i];
-    for(int j = 0; j < n; j++) {
+    for (int j = 0; j < n; j++) {
       point_t m = mounts[j];
-      point_t mv = sub(m,v);
+      point_t mv = sub(m, v);
 
-      float dist = dot(mv,mv);
-      if(dist < r_limit) {
+      float dist = dot(mv, mv);
+      if (dist < r_limit) {
 
         float t = r * r / dist;
-        if(t > h_limit) { t = h_limit; }
+        if (t > h_limit) {
+          t = h_limit;
+        }
 
         mesh->heightmap[i] += t;
-
       }
-
     }
   }
-
 }
-
-
 
 void normalize(mesh_t *mesh) {
 
   float max_val = mesh->heightmap[0];
   float min_value = mesh->heightmap[0];
-  #pragma omp parallel for reduction(min:min_value) reduction(max:max_val)
-  for(int i = 0; i < mesh->nVoxels; i++) {
-    if(max_val < mesh->heightmap[i]) {
+#pragma omp parallel for reduction(min : min_value) reduction(max : max_val)
+  for (int i = 0; i < mesh->nVoxels; i++) {
+    if (max_val < mesh->heightmap[i]) {
       max_val = mesh->heightmap[i];
     }
-    if(min_value > mesh->heightmap[i]) {
+    if (min_value > mesh->heightmap[i]) {
       min_value = mesh->heightmap[i];
     }
   }
 
-
-  float norm =  1.0 / (max_val - min_value);
+  float norm = 1.0 / (max_val - min_value);
   int i = 0;
-  #pragma omp parallel for schedule(static)
-  for(i = 0; i < mesh->nVoxels; i++) {
+#pragma omp parallel for schedule(static)
+  for (i = 0; i < mesh->nVoxels; i++) {
     mesh->heightmap[i] -= min_value;
     mesh->heightmap[i] *= norm;
   }
-  
-  
 }
-
 
 float get_mean(mesh_t *mesh) {
 
   float sum = 0.0;
-  #pragma omp parallel for reduction (+:sum)
-  for(int i = 0; i < mesh->nVoxels; i++) {
+#pragma omp parallel for reduction(+ : sum)
+  for (int i = 0; i < mesh->nVoxels; i++) {
     sum += mesh->heightmap[i];
   }
 
   return sum / (mesh->nVoxels);
 }
 
+float get_variance(mesh_t *mesh) {
+  float mean = get_mean(mesh);
+  float var = 0;
+  for (int i = 0; i < mesh->nVoxels; i++) {
+    var += (mesh->heightmap[i] - mean) * (mesh->heightmap[i] - mean);
+  }
+  return var / (mesh->nVoxels);
+}
 
+float get_max_height(mesh_t *mesh) {
+  float max_val = mesh->heightmap[0];
+  float min_value = mesh->heightmap[0];
+#pragma omp parallel for reduction(min : min_value) reduction(max : max_val)
+  for (int i = 0; i < mesh->nVoxels; i++) {
+    if (max_val < mesh->heightmap[i]) {
+      max_val = mesh->heightmap[i];
+    }
+    if (min_value > mesh->heightmap[i]) {
+      min_value = mesh->heightmap[i];
+    }
+  }
+  return max_val;
+}
 
+float get_min_height(mesh_t *mesh) {
+  float max_val = mesh->heightmap[0];
+  float min_value = mesh->heightmap[0];
+#pragma omp parallel for reduction(min : min_value) reduction(max : max_val)
+  for (int i = 0; i < mesh->nVoxels; i++) {
+    if (max_val < mesh->heightmap[i]) {
+      max_val = mesh->heightmap[i];
+    }
+    if (min_value > mesh->heightmap[i]) {
+      min_value = mesh->heightmap[i];
+    }
+  }
+  return min_value;
+}
 
+void HSVtoRGB(int H, double S, double V, int output[3]) {
+  double C = S * V;
+  double X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
+  double m = V - C;
+  double Rs, Gs, Bs;
 
+  if (H >= 0 && H < 60) {
+    Rs = C;
+    Gs = X;
+    Bs = 0;
+  } else if (H >= 60 && H < 120) {
+    Rs = X;
+    Gs = C;
+    Bs = 0;
+  } else if (H >= 120 && H < 180) {
+    Rs = 0;
+    Gs = C;
+    Bs = X;
+  } else if (H >= 180 && H < 240) {
+    Rs = 0;
+    Gs = X;
+    Bs = C;
+  } else if (H >= 240 && H < 300) {
+    Rs = X;
+    Gs = 0;
+    Bs = C;
+  } else {
+    Rs = C;
+    Gs = 0;
+    Bs = X;
+  }
+
+  output[0] = (Rs + m) * 255;
+  output[1] = (Gs + m) * 255;
+  output[2] = (Bs + m) * 255;
+}
+
+Color get_color(float height, float mean, float var, float min_height,
+                float max_height) {
+  if (height >= mean) {
+    // land
+    // light green: 110 100 50
+    // dark green: 110 100 25
+    float rescale_max = 0.50; // light green
+    float rescale_min = 0.25; // dark green
+    float min_height = mean;
+    float value = height;
+    int output[3];
+    int H = 110;
+    double S = 1.0;
+    float V = ((rescale_max - rescale_min) * (value - min_height) /
+               (max_height - min_height)) +
+              rescale_min;
+    // printf("land %f\n", V);
+    HSVtoRGB(H, S, V, output);
+    unsigned char a = 255;
+    Color element_color =
+        (Color){(unsigned char)output[0], (unsigned char)output[1],
+                (unsigned char)output[2], a};
+    return element_color;
+    // if (height > (mean + 2 * var)) {
+    // return BROWN;
+    //} else if (height > (mean + var)) {
+    // return DARKGREEN;
+    //} else {
+    // return GREEN;
+    //}
+  } else {
+    // water
+    float rescale_max = 0.65; // light blue
+    float rescale_min = 0.25; // dark blue
+    float max_height = mean;
+    float value = height;
+    int output[3];
+    int H = 205;
+    double S = 1.0;
+    float V = ((rescale_max - rescale_min) * (value - min_height) /
+               (max_height - min_height)) +
+              rescale_min;
+    // printf("water %f\n", V);
+    HSVtoRGB(H, S, V, output);
+    unsigned char a = 255;
+    Color element_color =
+        (Color){(unsigned char)output[0], (unsigned char)output[1],
+                (unsigned char)output[2], a};
+    return element_color;
+    // if (height < (mean - 2 * var)) {
+    // return DARKBLUE;
+    //} else if (height < (mean - var)) {
+    // return BLUE;
+    //} else {
+    // return SKYBLUE;
+    //}
+  }
+}
 
 int main(int argc, char **argv) {
 
-
-  auto MAIN_START = high_resolution_clock::now(); 
-
+  auto MAIN_START = high_resolution_clock::now();
 
   int nVoxels = 500;
   int nMountains = 25;
   int nThreads = 8;
   bool instrument = false;
 
+  bool render = true;
+
   int i = 1;
-  while(i < argc) {
+  while (i < argc) {
     string arg = argv[i];
     if (arg == "-n") {
       i++;
       nVoxels = atoi(argv[i]);
-    }
-    else if (arg == "-m") {
+    } else if (arg == "-m") {
       i++;
       nMountains = atoi(argv[i]);
-    }
-    else if (arg == "-t") {
+    } else if (arg == "-t") {
       i++;
       nThreads = atoi(argv[i]);
-    }
-    else if (arg == "-I") {
+    } else if (arg == "-I") {
       instrument = true;
-    }
-    else if (arg == "-h") {
+    } else if (arg == "-h") {
       printf("-n   number of voxels\n");
       printf("-m   number of mountains\n");
       printf("-t   number of threads\n");
@@ -357,17 +443,16 @@ int main(int argc, char **argv) {
     i++;
   }
 
-  if(instrument)
-    printf("Generating map with %d voxels and %d mountains with %d threads.\n", nVoxels, nMountains, nThreads );
+  if (instrument)
+    printf("Generating map with %d voxels and %d mountains with %d threads.\n",
+           nVoxels, nMountains, nThreads);
 
-  omp_set_num_threads( nThreads );
-  
+  omp_set_num_threads(nThreads);
 
   struct timeval tp;
   gettimeofday(&tp, NULL);
   unsigned int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
   srand(ms);
-
 
   // Image dimension
   int width = 512;
@@ -377,28 +462,24 @@ int main(int argc, char **argv) {
   mesh->width = width;
   mesh->height = height;
 
-
-  auto VORONOI_START = high_resolution_clock::now(); 
+  auto VORONOI_START = high_resolution_clock::now();
 
   jcv_point dimensions;
   dimensions.x = (jcv_real)width;
   dimensions.y = (jcv_real)height;
 
-  jcv_diagram diagram = return_voronoi( nVoxels );
+  jcv_diagram diagram = return_voronoi(nVoxels);
   const jcv_site *sites = jcv_diagram_get_sites(&diagram);
 
   auto VORONOI_END = high_resolution_clock::now();
 
-
-
-
-  auto PARSING_START = high_resolution_clock::now(); 
+  auto PARSING_START = high_resolution_clock::now();
 
   mesh->nVoxels = diagram.numsites;
-  mesh->vcenter = (point_t*)calloc(mesh->nVoxels,sizeof(point_t));
-  mesh->edges   = (edges_t*)calloc(mesh->nVoxels,sizeof(edges_t));
+  mesh->vcenter = (point_t *)calloc(mesh->nVoxels, sizeof(point_t));
+  mesh->edges = (edges_t *)calloc(mesh->nVoxels, sizeof(edges_t));
 
-  #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
   for (i = 0; i < diagram.numsites; ++i) {
     const jcv_site *site = &sites[i];
 
@@ -416,7 +497,7 @@ int main(int argc, char **argv) {
       point_t p0_t = point(p0.x, p0.y);
       point_t p1_t = point(p1.x, p1.y);
 
-      edges.push_back( edge(p0_t, p1_t) );
+      edges.push_back(edge(p0_t, p1_t));
 
       e = e->next;
     }
@@ -424,97 +505,202 @@ int main(int argc, char **argv) {
     mesh->edges[i] = edges;
   }
 
-  auto PARSING_END = high_resolution_clock::now(); 
-  
+  auto PARSING_END = high_resolution_clock::now();
 
-
-  mesh->heightmap = (float*)calloc(mesh->nVoxels,sizeof(int));
-
+  mesh->heightmap = (float *)calloc(mesh->nVoxels, sizeof(int));
 
   gettimeofday(&tp, NULL);
   ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
   srand(ms);
 
-
-
-
-  
-
-  auto SLOPE_START = high_resolution_clock::now(); 
+  auto SLOPE_START = high_resolution_clock::now();
   slope(mesh, point(rand_int(-100, 100), rand_int(-100, 100)));
-  auto SLOPE_END = high_resolution_clock::now(); 
+  auto SLOPE_END = high_resolution_clock::now();
 
-  auto NORM1_START = high_resolution_clock::now(); 
+  auto NORM1_START = high_resolution_clock::now();
   normalize(mesh);
-  auto NORM1_END = high_resolution_clock::now(); 
+  auto NORM1_END = high_resolution_clock::now();
 
-  auto MOUNTAINS_START = high_resolution_clock::now(); 
+  auto MOUNTAINS_START = high_resolution_clock::now();
   mountains(mesh, nMountains, 10, 30, 50000);
-  auto MOUNTAINS_END = high_resolution_clock::now(); 
+  auto MOUNTAINS_END = high_resolution_clock::now();
 
-  auto NORM2_START = high_resolution_clock::now(); 
+  auto NORM2_START = high_resolution_clock::now();
   normalize(mesh);
-  auto NORM2_END = high_resolution_clock::now(); 
+  auto NORM2_END = high_resolution_clock::now();
 
-  auto MEAN_START = high_resolution_clock::now(); 
+  auto MEAN_START = high_resolution_clock::now();
   float mean = get_mean(mesh);
-  auto MEAN_END = high_resolution_clock::now(); 
+  auto MEAN_END = high_resolution_clock::now();
 
+  float var = get_variance(mesh);
+  float min_height = get_min_height(mesh);
+  float max_height = get_max_height(mesh);
 
-  auto MAIN_END = high_resolution_clock::now(); 
+  auto MAIN_END = high_resolution_clock::now();
 
-  
-  if(!instrument) {
+  using Coord = float;
+
+  using N = uint32_t;
+
+  using Point = std::array<Coord, 2>;
+
+  const int screenWidth = 512;
+  const int screenHeight = 512;
+
+  if (render) {
+    InitWindow(screenWidth, screenHeight,
+               "raylib [shapes] example - basic shapes drawing");
+
+    SetTargetFPS(60); // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
+    // Main game loop
+    // int i = 1;
+    while (!WindowShouldClose()) // Detect window close button or ESC key
+    {
+      // Update
+      //----------------------------------------------------------------------------------
+      // TODO: Update your variables here
+      //----------------------------------------------------------------------------------
+
+      // Draw
+      //----------------------------------------------------------------------------------
+      BeginDrawing();
+
+      ClearBackground(RAYWHITE);
+
+      DrawText("some basic shapes available on raylib", 20, 20, 20, DARKGRAY);
+      for (int i = 0; i < mesh->nVoxels; i++) {
+        // printf("%f", mesh.heightmap[i]);
+        std::vector<std::vector<Point>> polygon;
+        std::vector<Point> poly_points;
+        for (int j = 0; j < mesh->edges[i].size(); j++) {
+          // printf(" %f %f", mesh.edges[i][j].v1.x, mesh.edges[i][j].v1.y);
+          Point p = {mesh->edges[i][j].v1.x, mesh->edges[i][j].v1.y};
+          poly_points.push_back(p);
+          // int startPosX = mesh.edges[i][j].v1.x;
+          // int startPosY = mesh.edges[i][j].v1.y;
+          // int endPosX = mesh.edges[i][j].v2.x;
+          // int endPosY = mesh.edges[i][j].v2.y;
+          // DrawLine(startPosX, startPosY, endPosX, endPosY, BLACK);
+        }
+        polygon.push_back(poly_points);
+        // for (const auto i : poly_points) {
+        // std::cout << i[0] << ' ' << i[1] << std::endl;
+        //}
+        // std::cout << "----" << std::endl;
+        // std::cout << "\n\n\n\n\n" << std::endl;
+        std::vector<N> indices = mapbox::earcut<N>(polygon);
+        // for (const auto i : indices) {
+        // std::cout << poly_points[i][0] << poly_points[i][1] << std::endl;
+        //}
+        for (int j = 0; j < indices.size() - 2; j++) {
+          // returned vertices are in CW order. raylib expects CCW.
+          // printf("%d %d %d\n", indices[j], indices[j + 1], indices[j + 2]);
+          Point tv_0 = poly_points[indices[j + 2]];
+          // printf("%f %f\n", tv_0[0], tv_0[1]);
+          // if (isnan(tv_0[0]) || isnan(tv_0[1])) {
+          // printf("nan\n");
+          // continue;
+          //}
+          Point tv_1 = poly_points[indices[j + 1]];
+          // printf("%f %f\n", tv_1[0], tv_1[1]);
+          // if (isnan(tv_1[0]) || isnan(tv_1[1])) {
+          // printf("nan\n");
+          // continue;
+          //}
+          Point tv_2 = poly_points[indices[j + 0]];
+          // printf("%f %f\n", tv_2[0], tv_2[1]);
+          // if (isnan(tv_2[0]) || isnan(tv_2[1])) {
+          // printf("nan\n");
+          // continue;
+          //}
+          Color color =
+              get_color(mesh->heightmap[i], mean, var, min_height, max_height);
+          DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0], tv_1[1]},
+                       (Vector2){tv_2[0], tv_2[1]}, color);
+        }
+        // for (int j = 0; j < mesh.edges[i].size(); j++) {
+        // float startPosX = mesh.edges[i][j].v1.x;
+        // float startPosY = mesh.edges[i][j].v1.y;
+        // float endPosX = mesh.edges[i][j].v2.x;
+        // float endPosY = mesh.edges[i][j].v2.y;
+        // DrawLineEx((Vector2){startPosX, startPosY}, (Vector2){endPosX,
+        // endPosY}, 0.9, BLACK);
+        //}
+
+        // printf("\n");
+      }
+      // i = 0;
+      // NOTE: We draw all LINES based shapes together to optimize internal
+      // drawing, this way, all LINES are rendered in a single draw pass
+      EndDrawing();
+      //----------------------------------------------------------------------------------
+    }
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow(); // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
+    return 0;
+  }
+
+  if (!instrument) {
 
     printf("%f\n", mean);
-    
+
     for (int i = 0; i < mesh->nVoxels; i++) {
 
-        printf("%f", mesh->heightmap[i]);
-        for (int j = 0; j < mesh->edges[i].size(); j++) {
-          printf(" %f %f", mesh->edges[i][j].v1.x, mesh->edges[i][j].v1.y);
-        }
-        printf("\n");
-    } 
+      printf("%f", mesh->heightmap[i]);
+      for (int j = 0; j < mesh->edges[i].size(); j++) {
+        printf(" %f %f", mesh->edges[i][j].v1.x, mesh->edges[i][j].v1.y);
+      }
+      printf("\n");
+    }
   }
-  
-  
+
   else {
 
-    auto voronoi_duration = duration_cast<microseconds>(VORONOI_END - VORONOI_START).count(); 
-    auto main_duration    = duration_cast<microseconds>(MAIN_END - MAIN_START).count();
+    auto voronoi_duration =
+        duration_cast<microseconds>(VORONOI_END - VORONOI_START).count();
+    auto main_duration =
+        duration_cast<microseconds>(MAIN_END - MAIN_START).count();
 
+    auto parsing_duration =
+        duration_cast<microseconds>(PARSING_END - PARSING_START).count();
+    auto slope_duration =
+        duration_cast<microseconds>(SLOPE_END - SLOPE_START).count();
+    auto mountains_duration =
+        duration_cast<microseconds>(MOUNTAINS_END - MOUNTAINS_START).count();
+    auto norm_duration =
+        duration_cast<microseconds>(NORM1_END - NORM1_START).count() +
+        duration_cast<microseconds>(NORM2_END - NORM2_START).count();
+    auto mean_duration =
+        duration_cast<microseconds>(MEAN_END - MEAN_START).count();
 
-    auto parsing_duration   = duration_cast<microseconds>(PARSING_END - PARSING_START).count();
-    auto slope_duration     = duration_cast<microseconds>(SLOPE_END - SLOPE_START).count();
-    auto mountains_duration = duration_cast<microseconds>(MOUNTAINS_END - MOUNTAINS_START).count();
-    auto norm_duration      = duration_cast<microseconds>(NORM1_END - NORM1_START).count() + duration_cast<microseconds>(NORM2_END - NORM2_START).count();
-    auto mean_duration      = duration_cast<microseconds>(MEAN_END - MEAN_START).count();
+    auto misc_duration = main_duration - voronoi_duration - parsing_duration -
+                         slope_duration - mountains_duration - norm_duration -
+                         mean_duration;
 
-    auto misc_duration = main_duration - voronoi_duration - parsing_duration - slope_duration - mountains_duration - norm_duration - mean_duration;
-
-    
-    cout << "Voronoi   | " << voronoi_duration << " microseconds" << endl; 
-    cout << "Parsing   | " << parsing_duration << " microseconds" << endl; 
-    cout << "Slope     | " << slope_duration << " microseconds" << endl; 
-    cout << "Mountains | " << mountains_duration << " microseconds" << endl; 
-    cout << "Norm      | " << norm_duration << " microseconds" << endl; 
-    cout << "Mean      | " << mean_duration << " microseconds" << endl; 
-    cout << "Misc      | " << misc_duration << " microseconds" << endl; 
-    cout << "Main      | " << main_duration << " microseconds" << endl; 
-    
+    cout << "Voronoi   | " << voronoi_duration << " microseconds" << endl;
+    cout << "Parsing   | " << parsing_duration << " microseconds" << endl;
+    cout << "Slope     | " << slope_duration << " microseconds" << endl;
+    cout << "Mountains | " << mountains_duration << " microseconds" << endl;
+    cout << "Norm      | " << norm_duration << " microseconds" << endl;
+    cout << "Mean      | " << mean_duration << " microseconds" << endl;
+    cout << "Misc      | " << misc_duration << " microseconds" << endl;
+    cout << "Main      | " << main_duration << " microseconds" << endl;
 
     /*
-    cout << voronoi_duration << endl; 
-    cout << parsing_duration << endl; 
-    cout << slope_duration << endl; 
-    cout << mountains_duration << endl; 
-    cout << norm_duration << endl; 
-    cout << mean_duration << endl; 
-    cout << misc_duration << endl; 
-    cout << main_duration << endl; 
+    cout << voronoi_duration << endl;
+    cout << parsing_duration << endl;
+    cout << slope_duration << endl;
+    cout << mountains_duration << endl;
+    cout << norm_duration << endl;
+    cout << mean_duration << endl;
+    cout << misc_duration << endl;
+    cout << main_duration << endl;
     */
-
   }
-
 }
