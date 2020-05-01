@@ -493,7 +493,7 @@ int main(int argc, char **argv) {
 
     auto misc_duration = main_duration - voronoi_duration - parsing_duration - slope_duration - mountains_duration - norm_duration - mean_duration;
 
-
+    
     cout << "Voronoi   | " << voronoi_duration << " microseconds" << endl; 
     cout << "Parsing   | " << parsing_duration << " microseconds" << endl; 
     cout << "Slope     | " << slope_duration << " microseconds" << endl; 
@@ -502,6 +502,19 @@ int main(int argc, char **argv) {
     cout << "Mean      | " << mean_duration << " microseconds" << endl; 
     cout << "Misc      | " << misc_duration << " microseconds" << endl; 
     cout << "Main      | " << main_duration << " microseconds" << endl; 
+    
+
+    /*
+    cout << voronoi_duration << endl; 
+    cout << parsing_duration << endl; 
+    cout << slope_duration << endl; 
+    cout << mountains_duration << endl; 
+    cout << norm_duration << endl; 
+    cout << mean_duration << endl; 
+    cout << misc_duration << endl; 
+    cout << main_duration << endl; 
+    */
+
   }
 
 }
