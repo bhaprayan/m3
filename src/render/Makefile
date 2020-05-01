@@ -1,5 +1,5 @@
 CXX=gcc
-CFLAGS=-lraylib
+CFLAGS=-lraylib -lrlgl
 
 window :
 	$(CXX) $(CFLAGS) window.c -o window.out
@@ -18,6 +18,9 @@ camera:
 
 drawpoly:
 	$(CXX) $(CFLAGS) drawpoly.c -o drawpoly.out
+
+heightmap:
+	$(CXX) $(CFLAGS) models_heightmap.c -o heightmap.out
 
 clean :
 	rm *.out
