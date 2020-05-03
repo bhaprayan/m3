@@ -91,6 +91,7 @@ struct mesh_t {
   int nVoxels;
   int width;
   int height;
+  // Color *color; // size |v|
 };
 
 // -------------------- END CONSTRUCTORS -------------------- //
@@ -166,8 +167,8 @@ jcv_diagram return_voronoi(int count) {
   int i = 0;
 #pragma omp parallel for schedule(static)
   for (i = 0; i < count; ++i) {
-    points[i].x = (float)(pointoffset + GetRN() % (width - 2 * pointoffset));
-    points[i].y = (float)(pointoffset + GetRN() % (height - 2 * pointoffset));
+    points[i].x = (float)(pointoffset + rand() % (width - 2 * pointoffset));
+    points[i].y = (float)(pointoffset + rand() % (height - 2 * pointoffset));
   }
 
   jcv_clipper *clipper = 0;
@@ -277,6 +278,7 @@ float get_mean(mesh_t *mesh) {
 float get_variance(mesh_t *mesh) {
   float mean = get_mean(mesh);
   float var = 0;
+#pragma omp parallel for reduction(+ : var)
   for (int i = 0; i < mesh->nVoxels; i++) {
     var += (mesh->heightmap[i] - mean) * (mesh->heightmap[i] - mean);
   }
@@ -410,7 +412,7 @@ Color get_color(float height, float mean, float var, float min_height,
 }
 
 int main(int argc, char **argv) {
-
+  srand(0);
   auto MAIN_START = high_resolution_clock::now();
 
   int nVoxels = 500;
@@ -452,7 +454,6 @@ int main(int argc, char **argv) {
   struct timeval tp;
   gettimeofday(&tp, NULL);
   unsigned int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-  srand(ms);
 
   // Image dimension
   int width = 512;
@@ -478,6 +479,7 @@ int main(int argc, char **argv) {
   mesh->nVoxels = diagram.numsites;
   mesh->vcenter = (point_t *)calloc(mesh->nVoxels, sizeof(point_t));
   mesh->edges = (edges_t *)calloc(mesh->nVoxels, sizeof(edges_t));
+  // mesh->color = (Color *)calloc(mesh->nVoxels, sizeof(Color));
 
 #pragma omp parallel for schedule(static)
   for (i = 0; i < diagram.numsites; ++i) {
@@ -509,9 +511,9 @@ int main(int argc, char **argv) {
 
   mesh->heightmap = (float *)calloc(mesh->nVoxels, sizeof(int));
 
-  gettimeofday(&tp, NULL);
-  ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-  srand(ms);
+  // gettimeofday(&tp, NULL);
+  // ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+  // srand(0);
 
   auto SLOPE_START = high_resolution_clock::now();
   slope(mesh, point(rand_int(-100, 100), rand_int(-100, 100)));
@@ -548,94 +550,66 @@ int main(int argc, char **argv) {
   const int screenWidth = 512;
   const int screenHeight = 512;
 
+  // TODO: big assumption! this could break the code at some point.
+  // Color *cell_colors = (Color *)calloc(32, sizeof(Color));
+
   if (render) {
-    InitWindow(screenWidth, screenHeight,
-               "raylib [shapes] example - basic shapes drawing");
+    InitWindow(screenWidth, screenHeight, "m3. merlins multicore maps");
 
     SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-
     // Main game loop
     int i = 0;
     while (!WindowShouldClose()) // Detect window close button or ESC key
     {
       auto RENDER_START = high_resolution_clock::now();
-      // Update
-      //----------------------------------------------------------------------------------
-      // TODO: Update your variables here
-      //----------------------------------------------------------------------------------
-
-      // Draw
-      //----------------------------------------------------------------------------------
       BeginDrawing();
 
       ClearBackground(RAYWHITE);
 
-      DrawText("some basic shapes available on raylib", 20, 20, 20, DARKGRAY);
+      // 1. triangulation over the voronoi heightmap
+      // 2. compute color gradient based on the heightmap
+      // 3. render
+      //#pragma omp parallel for schedule(static)
+      // for (int i = 0; i < mesh->nVoxels; i++) {
+      // Color color =
+      // get_color(mesh->heightmap[i], mean, var, min_height, max_height);
+      // mesh->color[i] = color;
+      //}
       for (int i = 0; i < mesh->nVoxels; i++) {
-        // printf("%f", mesh.heightmap[i]);
         std::vector<std::vector<Point>> polygon;
         std::vector<Point> poly_points;
         for (int j = 0; j < mesh->edges[i].size(); j++) {
-          // printf(" %f %f", mesh.edges[i][j].v1.x, mesh.edges[i][j].v1.y);
           Point p = {mesh->edges[i][j].v1.x, mesh->edges[i][j].v1.y};
           poly_points.push_back(p);
-          // int startPosX = mesh.edges[i][j].v1.x;
-          // int startPosY = mesh.edges[i][j].v1.y;
-          // int endPosX = mesh.edges[i][j].v2.x;
-          // int endPosY = mesh.edges[i][j].v2.y;
-          // DrawLine(startPosX, startPosY, endPosX, endPosY, BLACK);
         }
         polygon.push_back(poly_points);
-        // for (const auto i : poly_points) {
-        // std::cout << i[0] << ' ' << i[1] << std::endl;
-        //}
-        // std::cout << "----" << std::endl;
-        // std::cout << "\n\n\n\n\n" << std::endl;
+
         std::vector<N> indices = mapbox::earcut<N>(polygon);
-        // for (const auto i : indices) {
-        // std::cout << poly_points[i][0] << poly_points[i][1] << std::endl;
-        //}
-        for (int j = 0; j < indices.size() - 2; j++) {
+        int j = 0;
+        // Color color = mesh->color[i];
+        Color color =
+            get_color(mesh->heightmap[i], mean, var, min_height, max_height);
+        for (j = 0; j < indices.size() - 2; j++) {
           // returned vertices are in CW order. raylib expects CCW.
-          // printf("%d %d %d\n", indices[j], indices[j + 1], indices[j + 2]);
           Point tv_0 = poly_points[indices[j + 2]];
-          // printf("%f %f\n", tv_0[0], tv_0[1]);
-          // if (isnan(tv_0[0]) || isnan(tv_0[1])) {
-          // printf("nan\n");
-          // continue;
-          //}
           Point tv_1 = poly_points[indices[j + 1]];
-          // printf("%f %f\n", tv_1[0], tv_1[1]);
-          // if (isnan(tv_1[0]) || isnan(tv_1[1])) {
-          // printf("nan\n");
-          // continue;
-          //}
           Point tv_2 = poly_points[indices[j + 0]];
-          // printf("%f %f\n", tv_2[0], tv_2[1]);
-          // if (isnan(tv_2[0]) || isnan(tv_2[1])) {
-          // printf("nan\n");
-          // continue;
-          //}
-          Color color =
-              get_color(mesh->heightmap[i], mean, var, min_height, max_height);
           DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0], tv_1[1]},
                        (Vector2){tv_2[0], tv_2[1]}, color);
+          // cell_colors[j] = color;
         }
-        // for (int j = 0; j < mesh.edges[i].size(); j++) {
-        // float startPosX = mesh.edges[i][j].v1.x;
-        // float startPosY = mesh.edges[i][j].v1.y;
-        // float endPosX = mesh.edges[i][j].v2.x;
-        // float endPosY = mesh.edges[i][j].v2.y;
-        // DrawLineEx((Vector2){startPosX, startPosY}, (Vector2){endPosX,
-        // endPosY}, 0.9, BLACK);
-        //}
 
-        // printf("\n");
+        // for (j = 0; j < indices.size() - 2; j++) {
+        // Point tv_0 = poly_points[indices[j + 2]];
+        // Point tv_1 = poly_points[indices[j + 1]];
+        // Point tv_2 = poly_points[indices[j + 0]];
+        // Color color = cell_colors[j];
+        // DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0],
+        // tv_1[1]}, (Vector2){tv_2[0], tv_2[1]}, color);
+        //}
       }
       // i = 0;
-      // NOTE: We draw all LINES based shapes together to optimize internal
-      // drawing, this way, all LINES are rendered in a single draw pass
       EndDrawing();
       //----------------------------------------------------------------------------------
       auto RENDER_END = high_resolution_clock::now();
