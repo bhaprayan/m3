@@ -58,6 +58,8 @@ Fig 4. Generation time in microsec with n=320000, m=32000.<br>
 
 ## Gallery
 
+(Click on the image to reveal a high-res version with the number of voxels and mountains listed.)
+
 <p float="left">
   <img src="documentation/n256m8.png" width="20%" />
   <img src="documentation/n256m16.png" width="20%" />
