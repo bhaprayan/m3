@@ -29,7 +29,7 @@ make mapgen
 
 <img src="documentation/block_diagram.png" width="50%">
 
-BAbove is a block diagram of Generation and Rendering stages. Arrows showa linear set of dependencies in the program. CPU-executed components arein yellow, and GPU components are in green.
+Above is a block diagram of Generation and Rendering stages. Arrows showa linear set of dependencies in the program. CPU-executed components arein yellow, and GPU components are in green.
 
 
 * **Voronoi** - Compute a random Voronoi Map of N voxels using the Fortune Sweep Library.
@@ -42,7 +42,7 @@ BAbove is a block diagram of Generation and Rendering stages. Arrows showa linea
 
 ### Performance
 
-Results compouted on a 8 Core Linux machine.
+Results computed on a 8 Core Linux machine.
 
 Fig 1. Generation time in microsec as voxels increase, m=25.<br>
 <img src="documentation/voxel_speedup.png" width="50%">
