@@ -60,9 +60,16 @@ Fig 4. Generation time in microsec with n=320000, m=32000.<br>
 
 <p float="left">
   <img src="documentation/n256m8.png" width="20%" />
-  <img src="documentation/n256m8.png" width="20%" />
-  <img src="documentation/n256m8.png" width="20%" />
-  <img src="documentation/n256m8.png" width="20%" />
-  <img src="documentation/n256m8.png" width="20%" />
+  <img src="documentation/n256m16.png" width="20%" />
+  <img src="documentation/n256m32.png" width="20%" />
+  <img src="documentation/n2048m1.png" width="20%" />
+  <img src="documentation/n2048m30.png" width="20%" />
+  <img src="documentation/n2048m32.png" width="20%" />
+  <img src="documentation/n2048m64.png" width="20%" />
+  <img src="documentation/n2048m128.png" width="20%" />
+  <img src="documentation/n8192m16.png" width="20%" />
+  <img src="documentation/n32000m1600.png" width="20%" />
+  <img src="documentation/n32000m3200.png" width="20%" />
+  <img src="documentation/n32000m6400.png" width="20%" />
 </p>
 
