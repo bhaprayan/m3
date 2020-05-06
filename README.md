@@ -18,6 +18,11 @@ make mapgen
 
 ### External Libraries & APIs
 
+* [Generating Fantasy Maps (inspiration)](http://mewo2.com/notes/terrain/)
+* [FortuneSweep Voronoi Generation](https://github.com/JCash/voronoi)
+* [Graphics.py](https://mcsp.wartburg.edu/zelle/python/graphics.py)
+* [Raylib](https://www.raylib.com)
+* [EarCut Tesselation](https://github.com/mapbox/earcut)
 * [OpenMP](https://www.openmp.org)
 
 ## Algorithm Design
