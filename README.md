@@ -32,13 +32,13 @@ make mapgen
 BAbove is a block diagram of Generation and Rendering stages. Arrows showa linear set of dependencies in the program. CPU-executed components arein yellow, and GPU components are in green.
 
 
-* Voronoi - Compute a random Voronoi Map of N voxels using the Fortune Sweep Library.
-* Parsing- Iterate over the centroids and edges of the returned voronoi map and store them inthe custom map data structure. Allocate a zeroed out heightmap of the same size as the numberof voxels.
-* Slope - Generate a random 2D vector representation of a line and compute the dot product ofeach voxel centroid to the the line. Store this distance in the voxel’s heightmap.
-* Mountain- Generate M 2D mountain locations. For each voxel, compute the distance betweenthe voxel and mountain center.  The height increase as a result of the mountain is inverselyproportional to this distance (closer voxels will have their height affected more by the mountain).
-* Normalize - Retrieve the max and min value in the heightmap list. Subtract the min from eachvalue in the heightmap, and divide by the difference between the max and min.
-* Mean- Retrieve the mean of the heightmap list.
-* Render - Compute the color for each voxel as a function of its height.  Before rendering eachvoxel, tessellate the polygon using the EarCut algorithm , and render each triangle using Raylib with the color computed from the voxel’s height
+* **Voronoi** - Compute a random Voronoi Map of N voxels using the Fortune Sweep Library.
+* **Parsing** - Iterate over the centroids and edges of the returned voronoi map and store them inthe custom map data structure. Allocate a zeroed out heightmap of the same size as the numberof voxels.
+* **Slope** - Generate a random 2D vector representation of a line and compute the dot product of each voxel centroid to the the line. Store this distance in the voxel’s heightmap.
+* **Mountain** - Generate M 2D mountain locations. For each voxel, compute the distance betweenthe voxel and mountain center.  The height increase as a result of the mountain is inversely proportional to this distance (closer voxels will have their height affected more by the mountain).
+* **Normalize** - Retrieve the max and min value in the heightmap list. Subtract the min from each value in the heightmap, and divide by the difference between the max and min.
+* **Mean** - Retrieve the mean of the heightmap list.
+* **Render** - Compute the color for each voxel as a function of its height.  Before rendering each voxel, tessellate the polygon using the EarCut algorithm , and render each triangle using Raylib with the color computed from the voxel’s height.
 
 ### Performance
 
