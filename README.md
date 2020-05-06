@@ -57,3 +57,9 @@ Fig 4. Generation time in microsec with n=320000, m=32000.<br>
 
 
 ## Gallery
+
+
+<div style='float:left;width:50%'>
+  Generation time in microsec with n=320000, m=32000.<br>
+  <img src="documentation/n256m8.png" width="100%">
+</div>
