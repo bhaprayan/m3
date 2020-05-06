@@ -8,3 +8,10 @@
 
 ### Backwards Evolution
 <img src="documentation/evolution_backwards.gif" width="50%">
+
+## Execution
+
+```
+make mapgen
+./mapgen -n [nVoxels] -m [nMountains], -t [nThreads]
+```
