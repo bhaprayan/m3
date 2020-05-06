@@ -27,7 +27,7 @@ make mapgen
 
 ## Algorithm Design
 
-<img src="documentation/block_diagram.png" width="50%">
+<img src="documentation/block_diagram.png" width="75%">
 
 Above is a block diagram of Generation and Rendering stages. Arrows showa linear set of dependencies in the program. CPU-executed components arein yellow, and GPU components are in green.
 
