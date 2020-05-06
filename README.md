@@ -16,4 +16,8 @@ make mapgen
 ./mapgen -n [nVoxels] -m [nMountains], -t [nThreads]
 ```
 
+### External Libraries & APIs
+
+* [OpenMP](https://www.openmp.org)
+
 ## Algorithm Design
