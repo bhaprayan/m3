@@ -15,3 +15,5 @@
 make mapgen
 ./mapgen -n [nVoxels] -m [nMountains], -t [nThreads]
 ```
+
+## Algorithm Design
