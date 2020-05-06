@@ -10,6 +10,7 @@
 #include <numeric>
 #include <string>
 #include <sys/time.h>
+#include <thread>
 #include <time.h>
 #include <tuple>
 #include <unordered_map>
@@ -167,8 +168,8 @@ jcv_diagram return_voronoi(int count) {
   int i = 0;
 #pragma omp parallel for schedule(static)
   for (i = 0; i < count; ++i) {
-    points[i].x = (float)(pointoffset + rand() % (width - 2 * pointoffset));
-    points[i].y = (float)(pointoffset + rand() % (height - 2 * pointoffset));
+    points[i].x = (float)(pointoffset + GetRN() % (width - 2 * pointoffset));
+    points[i].y = (float)(pointoffset + GetRN() % (height - 2 * pointoffset));
   }
 
   jcv_clipper *clipper = 0;
@@ -412,7 +413,6 @@ Color get_color(float height, float mean, float var, float min_height,
 }
 
 int main(int argc, char **argv) {
-  srand(0);
   auto MAIN_START = high_resolution_clock::now();
 
   int nVoxels = 500;
@@ -456,8 +456,8 @@ int main(int argc, char **argv) {
   unsigned int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
 
   // Image dimension
-  int width = 512;
-  int height = 512;
+  int width = 900;
+  int height = 900;
 
   mesh_t *mesh = new mesh_t();
   mesh->width = width;
@@ -511,9 +511,9 @@ int main(int argc, char **argv) {
 
   mesh->heightmap = (float *)calloc(mesh->nVoxels, sizeof(int));
 
-  // gettimeofday(&tp, NULL);
-  // ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-  // srand(0);
+  gettimeofday(&tp, NULL);
+  ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+  srand(ms);
 
   auto SLOPE_START = high_resolution_clock::now();
   slope(mesh, point(rand_int(-100, 100), rand_int(-100, 100)));
@@ -547,8 +547,8 @@ int main(int argc, char **argv) {
 
   using Point = std::array<Coord, 2>;
 
-  const int screenWidth = 512;
-  const int screenHeight = 512;
+  const int screenWidth = 900;
+  const int screenHeight = 900;
 
   // TODO: big assumption! this could break the code at some point.
   // Color *cell_colors = (Color *)calloc(32, sizeof(Color));
@@ -653,6 +653,9 @@ int main(int argc, char **argv) {
         i += 1;
       }
     }
+    std::chrono::milliseconds timewait(1000);
+
+    std::this_thread::sleep_for(timewait);
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
