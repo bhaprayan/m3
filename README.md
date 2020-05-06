@@ -42,6 +42,8 @@ BAbove is a block diagram of Generation and Rendering stages. Arrows showa linea
 
 ### Performance
 
+Results compouted on a 8 Core Linux machine.
+
 Fig 1. Generation time in microsec as voxels increase, m=25.<br>
 <img src="documentation/voxel_speedup.png" width="50%">
 
