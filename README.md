@@ -1,5 +1,6 @@
 # m3
-merlins multicore maps
+
+<img src="documentation/title.png">
 
 
 <img src="documentation/evolution_forward.gif" width="50%">
