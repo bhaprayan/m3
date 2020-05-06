@@ -33,17 +33,14 @@ make mapgen
 
 
 
-<figure>
-  <img src="documentation/voxel_speedup.png" width="50%">
-  <figcaption>Generation time in microsec as voxels increase, m=25.</figcaption>
-</figure>
+Generation time in microsec as voxels increase, m=25.
+<img src="documentation/voxel_speedup.png" width="50%">
 
-
-<img src="documentation/voxel_breakdown.png" width="50%">
 Generation time in microsec with n=320000, m=25.
+<img src="documentation/voxel_breakdown.png" width="50%">
 
-<img src="documentation/mountain_speedup.png" width="50%">
 Generation time in microsec as mountains increase, n=32000.
+<img src="documentation/mountain_speedup.png" width="50%">
 
-<img src="documentation/mountain_breakdown.png" width="50%">
 Generation time in microsec with n=320000, m=32000.
+<img src="documentation/mountain_breakdown.png" width="50%">
