@@ -27,11 +27,11 @@ make mapgen
 
 ## Algorithm Design
 
-<img src="documentation/block_diagram.gif" width="50%">
+<img src="documentation/block_diagram.png" width="50%">
 
 ### Performance
 
-<img src="documentation/voxel_speedup.gif" width="50%">
-<img src="documentation/voxel_breakdown.gif" width="50%">
-<img src="documentation/mountain_speedup.gif" width="50%">
-<img src="documentation/mountain_breakdown.gif" width="50%">
+<img src="documentation/voxel_speedup.png" width="50%">
+<img src="documentation/voxel_breakdown.png" width="50%">
+<img src="documentation/mountain_speedup.png" width="50%">
+<img src="documentation/mountain_breakdown.png" width="50%">
