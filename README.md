@@ -31,8 +31,13 @@ make mapgen
 
 ### Performance
 
-<img src="documentation/voxel_speedup.png" width="50%">
-Generation time in microsec as voxels increase, m=25.
+
+
+<figure>
+  <img src="documentation/voxel_speedup.png" width="50%">
+  <figcaption>Generation time in microsec as voxels increase, m=25.</figcaption>
+</figure>
+
 
 <img src="documentation/voxel_breakdown.png" width="50%">
 Generation time in microsec with n=320000, m=25.
