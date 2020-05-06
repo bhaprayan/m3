@@ -41,8 +41,7 @@ The block diagram gives an overview of the map generation and rendering pipeline
 
 ### Performance
 
-Results of Fig 1.-3. computed on an 8-core Linux machine.
-
+Results of Fig 1.-3. computed on an 8-core Linux machine.<br>
 Results of Fig 4. computed on an 4-core Linux machine.
 
 Fig 1. Generation time in microsec as voxels increase, m=25.<br>
