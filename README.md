@@ -1,6 +1,7 @@
 <img src="documentation/title.png">
 
 ## Evolution Visualization
+(Note: GIFs may need few seconds to load)
 
 ### Forward Evolution
 <img src="documentation/evolution_forward.gif" width="50%">
