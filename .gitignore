@@ -3,3 +3,4 @@ tags*
 # build files
 build/
 mapgen
+__pycache__/
