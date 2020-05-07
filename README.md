@@ -27,7 +27,7 @@ make mapgen
 
 ## Algorithm Design
 
-<img src="documentation/block_diagram.png" width="75%">
+<img src="documentation/block_diagram.jpg" width="75%">
 
 The block diagram gives an overview of the map generation and rendering pipeline. Arrows are used to indicate a linear set of dependencies between different stages of the pipeline. CPU-executed components are indicated in yellow, and GPU components are indicated in green.
 
