@@ -35,10 +35,6 @@
 
 #ifndef JC_VORONOI_IMPLEMENTATION
 #define JC_VORONOI_IMPLEMENTATION
-// If you wish to use doubles
-//#define JCV_REAL_TYPE double
-//#define JCV_FABS fabs
-//#define JCV_ATAN2 atan2
 #include "../voronoi/src/jc_voronoi.h"
 #endif
 
@@ -163,7 +159,7 @@ jcv_diagram return_voronoi(int count) {
 
   points = (jcv_point *)malloc(sizeof(jcv_point) * (size_t)count);
 
-  int pointoffset = 10; // move the points inwards, for aestetic reasons
+  int pointoffset = 10; // move the points inwards, for aesthetic reasons
 
   int i = 0;
 #pragma omp parallel for schedule(static)
@@ -369,20 +365,12 @@ Color get_color(float height, float mean, float var, float min_height,
     float V = ((rescale_max - rescale_min) * (value - min_height) /
                (max_height - min_height)) +
               rescale_min;
-    // printf("land %f\n", V);
     HSVtoRGB(H, S, V, output);
     unsigned char a = 255;
     Color element_color =
         (Color){(unsigned char)output[0], (unsigned char)output[1],
                 (unsigned char)output[2], a};
     return element_color;
-    // if (height > (mean + 2 * var)) {
-    // return BROWN;
-    //} else if (height > (mean + var)) {
-    // return DARKGREEN;
-    //} else {
-    // return GREEN;
-    //}
   } else {
     // water
     float rescale_max = 0.65; // light blue
@@ -395,20 +383,12 @@ Color get_color(float height, float mean, float var, float min_height,
     float V = ((rescale_max - rescale_min) * (value - min_height) /
                (max_height - min_height)) +
               rescale_min;
-    // printf("water %f\n", V);
     HSVtoRGB(H, S, V, output);
     unsigned char a = 255;
     Color element_color =
         (Color){(unsigned char)output[0], (unsigned char)output[1],
                 (unsigned char)output[2], a};
     return element_color;
-    // if (height < (mean - 2 * var)) {
-    // return DARKBLUE;
-    //} else if (height < (mean - var)) {
-    // return BLUE;
-    //} else {
-    // return SKYBLUE;
-    //}
   }
 }
 
@@ -479,7 +459,6 @@ int main(int argc, char **argv) {
   mesh->nVoxels = diagram.numsites;
   mesh->vcenter = (point_t *)calloc(mesh->nVoxels, sizeof(point_t));
   mesh->edges = (edges_t *)calloc(mesh->nVoxels, sizeof(edges_t));
-  // mesh->color = (Color *)calloc(mesh->nVoxels, sizeof(Color));
 
 #pragma omp parallel for schedule(static)
   for (i = 0; i < diagram.numsites; ++i) {
@@ -550,9 +529,6 @@ int main(int argc, char **argv) {
   const int screenWidth = 900;
   const int screenHeight = 900;
 
-  // TODO: big assumption! this could break the code at some point.
-  // Color *cell_colors = (Color *)calloc(32, sizeof(Color));
-
   if (render) {
     InitWindow(screenWidth, screenHeight, "m3. merlins multicore maps");
 
@@ -570,12 +546,6 @@ int main(int argc, char **argv) {
       // 1. triangulation over the voronoi heightmap
       // 2. compute color gradient based on the heightmap
       // 3. render
-      //#pragma omp parallel for schedule(static)
-      // for (int i = 0; i < mesh->nVoxels; i++) {
-      // Color color =
-      // get_color(mesh->heightmap[i], mean, var, min_height, max_height);
-      // mesh->color[i] = color;
-      //}
       for (int i = 0; i < mesh->nVoxels; i++) {
         std::vector<std::vector<Point>> polygon;
         std::vector<Point> poly_points;
@@ -587,7 +557,6 @@ int main(int argc, char **argv) {
 
         std::vector<N> indices = mapbox::earcut<N>(polygon);
         int j = 0;
-        // Color color = mesh->color[i];
         Color color =
             get_color(mesh->heightmap[i], mean, var, min_height, max_height);
         for (j = 0; j < indices.size() - 2; j++) {
@@ -597,19 +566,8 @@ int main(int argc, char **argv) {
           Point tv_2 = poly_points[indices[j + 0]];
           DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0], tv_1[1]},
                        (Vector2){tv_2[0], tv_2[1]}, color);
-          // cell_colors[j] = color;
         }
-
-        // for (j = 0; j < indices.size() - 2; j++) {
-        // Point tv_0 = poly_points[indices[j + 2]];
-        // Point tv_1 = poly_points[indices[j + 1]];
-        // Point tv_2 = poly_points[indices[j + 0]];
-        // Color color = cell_colors[j];
-        // DrawTriangle((Vector2){tv_0[0], tv_0[1]}, (Vector2){tv_1[0],
-        // tv_1[1]}, (Vector2){tv_2[0], tv_2[1]}, color);
-        //}
       }
-      // i = 0;
       EndDrawing();
       //----------------------------------------------------------------------------------
       auto RENDER_END = high_resolution_clock::now();
@@ -709,16 +667,5 @@ int main(int argc, char **argv) {
     cout << "Mean      | " << mean_duration << " microseconds" << endl;
     cout << "Misc      | " << misc_duration << " microseconds" << endl;
     cout << "Main      | " << main_duration << " microseconds" << endl;
-
-    /*
-    cout << voronoi_duration << endl;
-    cout << parsing_duration << endl;
-    cout << slope_duration << endl;
-    cout << mountains_duration << endl;
-    cout << norm_duration << endl;
-    cout << mean_duration << endl;
-    cout << misc_duration << endl;
-    cout << main_duration << endl;
-    */
   }
 }
