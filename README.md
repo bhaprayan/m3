@@ -6,7 +6,7 @@
 ### Forward Evolution
 <img src="documentation/evolution_forward.gif" width="50%">
 
-### Backwards Evolution
+### Backward Evolution
 <img src="documentation/evolution_backwards.gif" width="50%">
 
 ## Execution
