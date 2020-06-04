@@ -76,3 +76,9 @@ Fig 4. Generation time in μsec with n=320000, m=32000.<br>
   <img src="documentation/n32000m6400.png" width="20%" />
 </p>
 
+## Contributors
+
+(equal contribution. sorted in alphabetical order).
+
+* Oscar Dadfar
+* Shuby Deshpande
